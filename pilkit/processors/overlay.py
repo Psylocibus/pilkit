@@ -51,7 +51,7 @@ class ImageOverlay(object):
         """
         :param overlay_img: PIL `Image` instance to overlay on the original image
         :param position: coordinate (x,y) of the top left corner of the overlay image on the original image. 
-        :param position_type: ABSOLUTE, RELATIVE, GRID (or 0, 1 or 2)
+        :param position_type: ABSOLUTE, RELATIVE
         :param margin: size (in px) of the margin that shall not be covered by the overlay image
         """
         self.overlay_img=overlay_img
@@ -64,40 +64,21 @@ class ImageOverlay(object):
         mask = Image.new("RGBA",(img.width, img.height),(0,0,0,0)) #transparent image with the same dimensions as original image
         
         #Compute the position of the watermark
-        paste_position = [int(self.position[0]),int(self.position[1])] #variable that stores the final absolute coordinates
+        match self.position_type :
+            case "ABSOLUTE" :
+                paste_position = [int(self.position[0]),int(self.position[1])] #variable that stores the final absolute coordinates
         
-        if self.position_type == "RELATIVE" :
-            #if relative, coordinates in self.position are a value in percent
-            available_width = img.width - self.overlay_img.width - 2*self.margin
-            available_height = img.height - self.overlay_img.height - 2*self.margin
-            #coordinate of the top left corner is margin+position%*available width
-            paste_position = [self.margin+int(self.position[0]*available_width/100),
-                                self.margin+int(self.position[1]*available_height/100)]
-        
-        elif self.position_type == "GRID" :
-            #compute X coordinate
-            if self.position[0] == 0: 
-                #if horizontal placement = left
-                paste_position[0] = self.margin
-            elif self.position[0] == 1: 
-                #if horizontal placement = center
-                paste_position[0] = img.width/2-self.overlay_img.width/2
-            else: 
-                #if horizontal placement = right
-                paste_position[0] = img.width-self.overlay_img.width-self.margin
-            paste_position[0] = int(paste_position[0])
+            case "RELATIVE" :
+                #if relative, coordinates in self.position are a value in percent
+                available_width = img.width - self.overlay_img.width - 2*self.margin
+                available_height = img.height - self.overlay_img.height - 2*self.margin
+                #coordinate of the top left corner is margin+position%*available width
+                paste_position = [self.margin+int(self.position[0]*available_width/100),
+                                    self.margin+int(self.position[1]*available_height/100)]
 
-            #compute Y coordinate
-            if self.position[1] == 0: 
-                #if vertical placement = top
-                paste_position[1] = self.margin
-            elif self.position[1] == 1: 
-                #if vertical placement = middle
-                paste_position[1] = img.height/2-self.overlay_img.height/2
-            else: 
-                #if vertical placement = bottom
-                paste_position[1] = img.height-self.overlay_img.height-self.margin
-            paste_position[1] = int(paste_position[1])
+            case _:
+                #raise error
+                raise ValueError("position_type shall be a string in the following list : 'RELATIVE', 'ABSOLUTE'")
 
         #Paste the overlay image on the mask at the computed location
         mask.paste(self.overlay_img, paste_position) #put the overlay image at the computed location

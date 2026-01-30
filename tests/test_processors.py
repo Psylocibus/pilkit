@@ -108,27 +108,6 @@ def test_imageoverlay_relative():
     expected_result_11 = Image.open(get_image_file("ImageOverlay_expected_result_11.png"))
     assert compare_images(result_11, expected_result_11) #overlay are positioned as expected 
 
-def test_imageoverlay_grid():
-    """
-    Test ImageOverlay processor with grid positioning
-    """
-    #preparing test data
-    green_bg = Image.new("RGB",(401,401), (0,255,0)) #green square : [w=h=401]. (x,y) coordinate of center pixel : (200,200)
-    
-    blue_overlay = Image.new("RGBA", (21,51), (0,0,255)) #blue rectangle [w=21 ; h=51]. (x,y) coordinate of center pixel : (10,25)
-    blue_overlay.putpixel((0,0),(255,255,255)) #set the top left corner in white
-    blue_overlay.putpixel((10,25),(127,127,127))
-    blue_overlay.putpixel((20,50),(0,0,0)) #set the bottom right corner in black
-
-    result_21 = green_bg.copy()
-    for x in [0,1,2]:
-        for y in [0,1,2]:
-            result_21 = ImageOverlay(blue_overlay, (x,y), "GRID", margin=15).process(result_21)
-
-    expected_result_21 = Image.open(get_image_file("ImageOverlay_expected_result_21.png"))
-    assert compare_images(result_21, expected_result_21) #overlay are positioned as expected 
- 
-
 def test_convert():
     img = Image.new('RGBA', (200, 100))
 
