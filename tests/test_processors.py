@@ -57,11 +57,12 @@ def test_coloroverlay():
     img = ColorOverlay(color, overlay_opacity=1.0).process(img)
     assert img.getpixel((0,0)) == (204, 0, 0)
 
-def test_imageoverlay():
+def test_imageoverlay_absolute():
     """
-    Test ImageOverlay processor
+    Test ImageOverlay processor with absolute positioning
+    Test conversion with non RGBA background
     """
-    #test with RGBA mode background image
+    #TEST 1 : overlay with two RGBA png mode background image
     background_img_rgba = Image.open(get_image_file("reference.png")).convert("RGBA")
     overlay_img_rgba = Image.open(get_image_file("image_with_transparency.png"))
     result_1 = background_img_rgba
@@ -72,7 +73,7 @@ def test_imageoverlay():
     assert compare_images(result_1, expected_result_1) #overlay are positioned as expected 
     assert result_1.mode == "RGBA" #the mode of the result is the same as the original 
 
-    #test with RGB mode background image
+    #TEST 2 : overlay RGBA png over RGB background image
     background_img_rgb = Image.open(get_image_file("reference.png")).convert("RGB")
     result_2 = background_img_rgb
     result_2 = ImageOverlay(overlay_img_rgba, (56,156)).process(result_2) #the overlay is completely inside the background image
@@ -82,6 +83,51 @@ def test_imageoverlay():
     assert compare_images(result_2, expected_result_2) #overlay are positioned as expected 
     assert result_2.mode == "RGB" #the mode of the result is the same as the original
 
+def test_imageoverlay_relative():
+    """
+    Test ImageOverlay processor with relative positioning
+    """
+    #preparing test data
+    green_bg = Image.new("RGB",(401,401), (0,255,0)) #green square : [w=h=401]. (x,y) coordinate of center pixel : (200,200)
+    
+    blue_overlay = Image.new("RGBA", (21,51), (0,0,255)) #blue rectangle [w=21 ; h=51]. (x,y) coordinate of center pixel : (10,25)
+    blue_overlay.putpixel((0,0),(255,255,255)) #set the top left corner in white
+    blue_overlay.putpixel((10,25),(0,0,0)) #set the center in black
+    
+    purple_overlay = Image.new("RGBA", (601,801), (255,0,255)) #purple rectangle [w=601 ; h=801]. (x,y) coordinate of center pixel : (300,400)
+    purple_overlay.putpixel((300,400),(0,0,0)) #set the center in black
+
+    #TEST
+    result_11 = green_bg.copy() #init
+
+    result_11 = ImageOverlay(blue_overlay, (0,0), "RELATIVE", margin=5).process(result_11)
+    result_11 = ImageOverlay(blue_overlay, (50,50), "RELATIVE", margin=5).process(result_11)
+    result_11 = ImageOverlay(blue_overlay, (100,100), "RELATIVE", margin=5).process(result_11)
+    result_11 = ImageOverlay(blue_overlay, (25,75), "RELATIVE", margin=5).process(result_11)
+
+    expected_result_11 = Image.open(get_image_file("ImageOverlay_expected_result_11.png"))
+    assert compare_images(result_11, expected_result_11) #overlay are positioned as expected 
+
+def test_imageoverlay_grid():
+    """
+    Test ImageOverlay processor with grid positioning
+    """
+    #preparing test data
+    green_bg = Image.new("RGB",(401,401), (0,255,0)) #green square : [w=h=401]. (x,y) coordinate of center pixel : (200,200)
+    
+    blue_overlay = Image.new("RGBA", (21,51), (0,0,255)) #blue rectangle [w=21 ; h=51]. (x,y) coordinate of center pixel : (10,25)
+    blue_overlay.putpixel((0,0),(255,255,255)) #set the top left corner in white
+    blue_overlay.putpixel((10,25),(127,127,127))
+    blue_overlay.putpixel((20,50),(0,0,0)) #set the bottom right corner in black
+
+    result_21 = green_bg.copy()
+    for x in [0,1,2]:
+        for y in [0,1,2]:
+            result_21 = ImageOverlay(blue_overlay, (x,y), "GRID", margin=15).process(result_21)
+
+    expected_result_21 = Image.open(get_image_file("ImageOverlay_expected_result_21.png"))
+    assert compare_images(result_21, expected_result_21) #overlay are positioned as expected 
+ 
 
 def test_convert():
     img = Image.new('RGBA', (200, 100))
